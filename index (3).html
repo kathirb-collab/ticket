@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CINEPLEX — Book Your Seat</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808;
+    --deep: #0e0e0e;
+    --card: #141414;
+    --border: #222;
+    --gold: #c9a84c;
+    --gold-light: #e8c96b;
+    --red: #e03535;
+    --white: #f5f0e8;
+    --muted: #888;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-italic: 'Playfair Display', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom Cursor */
+  .cursor {
+    width: 10px; height: 10px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, background 0.2s;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.18s ease, width 0.2s, height 0.2s;
+  }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 60px;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.98), transparent);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s, backdrop-filter 0.3s;
+  }
+  nav.scrolled {
+    border-color: var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(8,8,8,0.9);
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-decoration: none;
+  }
+  .logo span { color: var(--red); }
+  nav ul {
+    list-style: none;
+    display: flex; gap: 36px;
+  }
+  nav ul a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  nav ul a:hover { color: var(--gold); }
+  .nav-actions { display: flex; gap: 12px; align-items: center; }
+  .btn-outline {
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    background: transparent;
+    padding: 8px 20px;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { background: var(--gold); color: var(--black); }
+  .btn-fill {
+    background: var(--red);
+    color: var(--white);
+    border: none;
+    padding: 9px 22px;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .btn-fill:hover { background: #ff4444; transform: translateY(-1px); }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex; align-items: flex-end;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 60% at 60% 40%, rgba(201,168,76,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 20% 80%, rgba(224,53,53,0.05) 0%, transparent 60%),
+      linear-gradient(170deg, #0e0407 0%, #080808 50%, #060810 100%);
+  }
+  .hero-film-strip {
+    position: absolute; top: 0; right: 0;
+    width: 48%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .film-frame-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 3px; height: 100%;
+    opacity: 0.35;
+    transform: skewX(-2deg) scale(1.05);
+    transform-origin: right;
+  }
+  .film-col { display: flex; flex-direction: column; gap: 3px; }
+  .film-col:nth-child(2) { margin-top: -60px; }
+  .film-col:nth-child(3) { margin-top: -120px; }
+  .film-frame {
+    flex: none;
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    filter: grayscale(60%) contrast(1.1);
+  }
+  .film-frame:nth-child(1) { background-color: #1a0f0f; background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&q=80'); }
+  .film-frame:nth-child(2) { background-color: #0f0f1a; background-image: url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&q=80'); }
+  .film-frame:nth-child(3) { background-color: #0f1a0f; background-image: url('https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&q=80'); }
+  .film-frame:nth-child(4) { background-color: #1a1a0f; background-image: url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80'); }
+  .film-frame:nth-child(5) { background-color: #1a0f1a; background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&q=80'); }
+  .film-frame:nth-child(6) { background-color: #0f1a1a; background-image: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?w=400&q=80'); }
+
+  .hero-vignette {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, var(--black) 30%, transparent 65%, var(--black) 100%),
+                linear-gradient(to bottom, transparent 40%, var(--black) 100%);
+  }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 0 60px 80px;
+    max-width: 700px;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 24px;
+  }
+  .hero-tag::before {
+    content: ''; display: block;
+    width: 40px; height: 1px; background: var(--gold);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 10vw, 9rem);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .hero h1 .accent { color: var(--gold); }
+  .hero h1 .red { color: var(--red); }
+  .hero-sub {
+    font-family: var(--font-italic);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--muted);
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+  }
+  .hero-desc {
+    font-size: 0.95rem;
+    color: #aaa;
+    line-height: 1.7;
+    max-width: 460px;
+    margin-bottom: 44px;
+  }
+  .hero-cta { display: flex; gap: 16px; align-items: center; }
+  .btn-hero {
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    padding: 16px 40px;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    cursor: none;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .btn-hero::after {
+    content: ''; position: absolute;
+    top: 50%; left: -100%; width: 60%; height: 200%;
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-50%) skewX(-20deg);
+    transition: left 0.4s;
+  }
+  .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(201,168,76,0.3); }
+  .btn-hero:hover::after { left: 150%; }
+  .btn-ghost {
+    background: transparent; border: none;
+    color: var(--muted); font-size: 0.85rem;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: none; display: flex; align-items: center; gap: 8px;
+    transition: color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--white); }
+  .play-icon {
+    width: 40px; height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+  }
+  .hero-stats {
+    position: absolute; bottom: 80px; right: 60px;
+    display: flex; gap: 40px; z-index: 2;
+  }
+  .stat { text-align: right; }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.7rem; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Ticker */
+  .ticker {
+    background: var(--gold);
+    padding: 10px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .ticker-inner {
+    display: inline-flex; gap: 0;
+    animation: ticker 30s linear infinite;
+  }
+  .ticker-item {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    color: var(--black);
+    padding: 0 40px;
+  }
+  .ticker-sep { color: var(--red); font-size: 1.2rem; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* Section base */
+  section { padding: 100px 60px; }
+  .section-label {
+    font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after {
+    content: ''; flex: 0 0 40px; height: 1px; background: var(--gold);
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .section-sub {
+    color: var(--muted); font-size: 0.95rem;
+    line-height: 1.7; max-width: 500px;
+  }
+
+  /* Features */
+  .features { background: var(--deep); }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 60px;
+    border: 2px solid var(--border);
+  }
+  .feature-card {
+    background: var(--card);
+    padding: 44px 32px;
+    border-right: 1px solid var(--border);
+    transition: background 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card:last-child { border-right: none; }
+  .feature-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .feature-card:hover { background: #1a1a1a; }
+  .feature-card:hover::before { transform: scaleX(1); }
+  .feature-icon {
+    font-size: 2rem; margin-bottom: 20px;
+    display: block;
+  }
+  .feature-num {
+    font-family: var(--font-display);
+    font-size: 5rem; color: var(--border);
+    position: absolute; top: 16px; right: 24px;
+    line-height: 1; letter-spacing: -2px;
+    transition: color 0.3s;
+  }
+  .feature-card:hover .feature-num { color: #2a2a2a; }
+  .feature-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem; letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .feature-card p {
+    font-size: 0.85rem; color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* Movies */
+  .movies-section { background: var(--black); }
+  .movies-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 48px;
+  }
+  .filter-tabs {
+    display: flex; gap: 4px;
+  }
+  .filter-tab {
+    padding: 8px 18px;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); cursor: none; transition: all 0.2s;
+  }
+  .filter-tab.active, .filter-tab:hover {
+    background: var(--gold); border-color: var(--gold); color: var(--black);
+  }
+  .movies-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .movie-card {
+    position: relative; overflow: hidden;
+    border: 1px solid var(--border);
+    transition: transform 0.3s, border-color 0.3s;
+    cursor: none;
+    group: true;
+  }
+  .movie-card:hover { transform: translateY(-6px); border-color: var(--gold); }
+  .movie-poster {
+    aspect-ratio: 2/3;
+    background-size: cover; background-position: center;
+    position: relative;
+  }
+  .movie-poster::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(8,8,8,0.95) 0%, rgba(8,8,8,0.3) 50%, transparent 100%);
+  }
+  .movie-badge {
+    position: absolute; top: 12px; left: 12px; z-index: 1;
+    background: var(--red);
+    font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 10px; font-weight: 500;
+  }
+  .movie-rating {
+    position: absolute; top: 12px; right: 12px; z-index: 1;
+    background: rgba(8,8,8,0.8);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-size: 0.9rem; padding: 4px 10px;
+    letter-spacing: 1px;
+  }
+  .movie-overlay {
+    position: absolute; inset: 0; z-index: 2;
+    background: rgba(8,8,8,0.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s;
+    gap: 12px;
+  }
+  .movie-card:hover .movie-overlay { opacity: 1; }
+  .btn-book {
+    background: var(--gold); color: var(--black);
+    border: none; padding: 12px 28px;
+    font-family: var(--font-display);
+    font-size: 1rem; letter-spacing: 3px;
+    cursor: none; transition: all 0.2s;
+    width: 160px; text-align: center;
+  }
+  .btn-book:hover { background: var(--gold-light); }
+  .btn-trailer {
+    background: transparent; color: var(--white);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px 28px;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    cursor: none; transition: all 0.2s;
+    width: 160px; text-align: center;
+  }
+  .movie-info {
+    padding: 16px;
+    background: var(--card);
+  }
+  .movie-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem; letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .movie-meta {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .movie-genre {
+    font-size: 0.7rem; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .movie-price {
+    font-family: var(--font-display);
+    font-size: 1rem; color: var(--gold); letter-spacing: 1px;
+  }
+
+  /* Seat Selection Section */
+  .seats-section {
+    background: var(--deep);
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items: center;
+    padding: 100px 60px;
+  }
+  .seat-demo { position: relative; }
+  .screen-label {
+    text-align: center;
+    font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .screen {
+    height: 6px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+    margin-bottom: 40px;
+    box-shadow: 0 4px 30px rgba(201,168,76,0.3);
+  }
+  .seat-grid {
+    display: flex; flex-direction: column; gap: 8px;
+    align-items: center;
+  }
+  .seat-row {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .seat-row-label {
+    font-size: 0.65rem; color: var(--muted); letter-spacing: 1px;
+    width: 16px; text-align: center; font-weight: 500;
+  }
+  .seat {
+    width: 24px; height: 20px;
+    border: 1px solid var(--border);
+    border-radius: 4px 4px 2px 2px;
+    background: var(--card);
+    cursor: none; transition: all 0.15s;
+    position: relative;
+  }
+  .seat:hover { border-color: var(--gold); background: rgba(201,168,76,0.15); }
+  .seat.taken { background: #1e1e1e; border-color: #1e1e1e; cursor: not-allowed; }
+  .seat.selected { background: var(--gold); border-color: var(--gold-light); }
+  .seat.premium { border-color: #4a3a9f; }
+  .seat.premium.selected { background: #6b5ce7; border-color: #8b7cf8; }
+  .seat-gap { width: 16px; }
+  .seat-legend {
+    display: flex; gap: 24px; margin-top: 24px; justify-content: center;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.7rem; color: var(--muted); letter-spacing: 1px;
+  }
+  .legend-dot {
+    width: 14px; height: 12px;
+    border-radius: 3px 3px 1px 1px;
+    border: 1px solid currentColor;
+  }
+  .legend-dot.available { color: var(--border); background: var(--card); }
+  .legend-dot.selected { color: var(--gold); background: var(--gold); }
+  .legend-dot.taken { color: #2a2a2a; background: #1e1e1e; }
+  .legend-dot.premium { color: #6b5ce7; background: transparent; }
+  .seats-content .section-title { color: var(--white); }
+  .feature-list {
+    list-style: none; margin-top: 32px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .feature-list li {
+    display: flex; align-items: flex-start; gap: 14px;
+    font-size: 0.9rem; color: #aaa; line-height: 1.5;
+  }
+  .check {
+    width: 20px; height: 20px; flex: none;
+    border: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold); font-size: 0.6rem; margin-top: 2px;
+  }
+
+  /* Showtimes */
+  .showtimes-section { background: var(--black); }
+  .showtimes-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 2px; margin-top: 56px;
+  }
+  .showtime-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    transition: border-color 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .showtime-card:hover { border-color: var(--gold); }
+  .showtime-card::after {
+    content: ''; position: absolute;
+    bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--red));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.4s;
+  }
+  .showtime-card:hover::after { transform: scaleX(1); }
+  .show-date {
+    font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 8px;
+  }
+  .show-movie {
+    font-family: var(--font-display);
+    font-size: 1.3rem; letter-spacing: 2px; margin-bottom: 4px;
+  }
+  .show-theater {
+    font-size: 0.8rem; color: var(--muted); margin-bottom: 24px;
+  }
+  .times-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .time-chip {
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    font-size: 0.8rem; letter-spacing: 1px;
+    cursor: none; transition: all 0.2s;
+    color: var(--muted);
+  }
+  .time-chip:hover, .time-chip.active {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+  .show-footer {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .availability {
+    font-size: 0.75rem; color: var(--muted); letter-spacing: 1px;
+  }
+  .avail-bar { display: flex; gap: 2px; margin-top: 4px; }
+  .avail-seg { width: 6px; height: 6px; background: var(--border); }
+  .avail-seg.filled { background: var(--gold); }
+  .avail-seg.red { background: var(--red); }
+
+  /* Payment */
+  .payment-section {
+    background: var(--deep);
+    display: grid; grid-template-columns: 1fr 1.2fr;
+    gap: 80px; align-items: start;
+    padding: 100px 60px;
+  }
+  .payment-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 40px;
+  }
+  .payment-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 32px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--border);
+  }
+  .order-line {
+    display: flex; justify-content: space-between;
+    font-size: 0.85rem; color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .order-line.total {
+    font-family: var(--font-display);
+    font-size: 1.2rem; color: var(--white);
+    border-top: 1px solid var(--border);
+    padding-top: 16px; margin-top: 8px;
+  }
+  .order-line.total span:last-child { color: var(--gold); }
+  .pay-methods {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin: 24px 0;
+  }
+  .pay-method {
+    border: 1px solid var(--border);
+    padding: 12px;
+    text-align: center; font-size: 0.75rem;
+    color: var(--muted); cursor: none;
+    transition: all 0.2s; letter-spacing: 1px;
+  }
+  .pay-method.active, .pay-method:hover {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,168,76,0.06);
+  }
+  .pay-method-icon { font-size: 1.2rem; margin-bottom: 4px; display: block; }
+  .input-group { margin-bottom: 16px; }
+  .input-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+  .fake-input {
+    width: 100%; padding: 12px 16px;
+    background: #1a1a1a; border: 1px solid var(--border);
+    color: var(--muted); font-family: var(--font-body);
+    font-size: 0.85rem; letter-spacing: 1px;
+    outline: none; cursor: text;
+  }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-pay {
+    width: 100%; background: var(--gold); color: var(--black);
+    border: none; padding: 18px;
+    font-family: var(--font-display); font-size: 1.2rem;
+    letter-spacing: 4px; cursor: none;
+    transition: all 0.25s; margin-top: 8px;
+  }
+  .btn-pay:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201,168,76,0.25); }
+
+  /* History */
+  .history-section { background: var(--black); }
+  .history-table {
+    width: 100%; border-collapse: collapse; margin-top: 48px;
+  }
+  .history-table th {
+    text-align: left; padding: 12px 20px;
+    font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .history-table td {
+    padding: 18px 20px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(34,34,34,0.5);
+    vertical-align: middle;
+  }
+  .history-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .booking-id {
+    font-family: var(--font-display); letter-spacing: 2px;
+    color: var(--gold); font-size: 0.9rem;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px; font-size: 0.65rem;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  .status-confirmed { background: rgba(201,168,76,0.12); color: var(--gold); }
+  .status-cancelled { background: rgba(224,53,53,0.12); color: var(--red); }
+  .status-used { background: rgba(100,100,100,0.15); color: var(--muted); }
+
+  /* Admin */
+  .admin-section { background: var(--deep); }
+  .admin-grid {
+    display: grid; grid-template-columns: 280px 1fr;
+    gap: 24px; margin-top: 56px;
+  }
+  .admin-sidebar {
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+  .admin-logo {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-display);
+    letter-spacing: 3px; font-size: 1rem;
+    color: var(--red);
+  }
+  .admin-nav-item {
+    padding: 14px 24px;
+    font-size: 0.8rem; letter-spacing: 1px;
+    color: var(--muted); cursor: none;
+    border-left: 2px solid transparent;
+    transition: all 0.2s; display: flex;
+    align-items: center; gap: 12px;
+  }
+  .admin-nav-item.active, .admin-nav-item:hover {
+    color: var(--white); border-left-color: var(--gold);
+    background: rgba(201,168,76,0.04);
+  }
+  .admin-main { display: flex; flex-direction: column; gap: 20px; }
+  .admin-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  .admin-stat {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 24px;
+  }
+  .admin-stat-label {
+    font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .admin-stat-value {
+    font-family: var(--font-display); font-size: 2.2rem;
+    color: var(--white); letter-spacing: 1px; line-height: 1;
+  }
+  .admin-stat-change {
+    font-size: 0.75rem; color: #4ade80; margin-top: 6px;
+  }
+  .admin-chart {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 28px;
+  }
+  .chart-title {
+    font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 24px;
+  }
+  .bar-chart {
+    display: flex; align-items: flex-end; gap: 10px; height: 100px;
+  }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar {
+    width: 100%; background: linear-gradient(to top, var(--gold), rgba(201,168,76,0.4));
+    transition: height 0.5s;
+  }
+  .bar-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 1px; }
+
+  /* Auth Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    width: 440px;
+    padding: 48px;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.active .modal { transform: translateY(0); }
+  .modal-close {
+    position: absolute; top: 20px; right: 20px;
+    background: none; border: none; color: var(--muted);
+    font-size: 1rem; cursor: none; transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--white); }
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 2rem; letter-spacing: 3px; margin-bottom: 8px;
+  }
+  .modal-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 32px; }
+  .modal-tabs { display: flex; gap: 0; margin-bottom: 32px; }
+  .modal-tab {
+    flex: 1; padding: 10px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-size: 0.75rem;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: none; transition: all 0.2s;
+  }
+  .modal-tab.active {
+    background: var(--gold); border-color: var(--gold); color: var(--black);
+  }
+  .modal-input {
+    width: 100%; padding: 14px 16px;
+    background: var(--black); border: 1px solid var(--border);
+    color: var(--white); font-family: var(--font-body);
+    font-size: 0.85rem; margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal-input:focus { border-color: var(--gold); }
+  .btn-modal {
+    width: 100%; background: var(--gold); color: var(--black);
+    border: none; padding: 16px;
+    font-family: var(--font-display); font-size: 1rem;
+    letter-spacing: 3px; cursor: none; margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-modal:hover { background: var(--gold-light); }
+  .modal-divider {
+    text-align: center; color: var(--muted); font-size: 0.75rem;
+    margin: 20px 0; letter-spacing: 2px;
+    position: relative;
+  }
+  .modal-divider::before, .modal-divider::after {
+    content: ''; position: absolute;
+    top: 50%; width: 40%; height: 1px; background: var(--border);
+  }
+  .modal-divider::before { left: 0; }
+  .modal-divider::after { right: 0; }
+  .social-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .social-btn {
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); padding: 10px;
+    font-size: 0.75rem; letter-spacing: 1px;
+    cursor: none; transition: all 0.2s;
+  }
+  .social-btn:hover { border-color: var(--white); color: var(--white); }
+
+  /* Footer */
+  footer {
+    background: var(--deep);
+    border-top: 1px solid var(--border);
+    padding: 60px;
+  }
+  .footer-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 60px; margin-bottom: 48px;
+  }
+  .footer-brand .logo { font-size: 2.5rem; display: block; margin-bottom: 16px; }
+  .footer-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.7; max-width: 260px; }
+  .footer-col h4 {
+    font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 20px;
+  }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-col ul a {
+    color: var(--muted); text-decoration: none; font-size: 0.85rem;
+    letter-spacing: 0.5px; transition: color 0.2s;
+  }
+  .footer-col ul a:hover { color: var(--white); }
+  .footer-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 24px; border-top: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--muted);
+  }
+  .footer-bottom a { color: var(--gold); text-decoration: none; }
+
+  /* Scroll animations */
+  .fade-up {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+  .fade-up:nth-child(2) { transition-delay: 0.1s; }
+  .fade-up:nth-child(3) { transition-delay: 0.2s; }
+  .fade-up:nth-child(4) { transition-delay: 0.3s; }
+
+  /* Responsive minimal */
+  @media (max-width: 1024px) {
+    nav { padding: 20px 30px; }
+    nav ul { display: none; }
+    section { padding: 60px 30px; }
+    .hero-content { padding: 0 30px 60px; }
+    .hero-stats { right: 30px; bottom: 60px; }
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+    .movies-grid { grid-template-columns: repeat(2, 1fr); }
+    .seats-section, .payment-section { grid-template-columns: 1fr; padding: 60px 30px; }
+    .showtimes-grid { grid-template-columns: 1fr; }
+    .admin-grid { grid-template-columns: 1fr; }
+    .admin-stats { grid-template-columns: repeat(2, 1fr); }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">WELCOME</div>
+    <div class="modal-sub">Sign in to your account or create a new one</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab(this,'login')">Login</button>
+      <button class="modal-tab" onclick="switchTab(this,'signup')">Sign Up</button>
+    </div>
+    <div id="loginForm">
+      <input class="modal-input" type="email" placeholder="Email address">
+      <input class="modal-input" type="password" placeholder="Password">
+      <button class="btn-modal">SIGN IN</button>
+      <div class="modal-divider">OR CONTINUE WITH</div>
+      <div class="social-btns">
+        <button class="social-btn">🔍 Google</button>
+        <button class="social-btn">🍎 Apple</button>
+      </div>
+    </div>
+    <div id="signupForm" style="display:none">
+      <input class="modal-input" type="text" placeholder="Full name">
+      <input class="modal-input" type="email" placeholder="Email address">
+      <input class="modal-input" type="password" placeholder="Create password">
+      <input class="modal-input" type="password" placeholder="Confirm password">
+      <button class="btn-modal">CREATE ACCOUNT</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav id="navbar">
+  <a href="#" class="logo">CINE<span>PLEX</span></a>
+  <ul>
+    <li><a href="#movies">Movies</a></li>
+    <li><a href="#showtimes">Showtimes</a></li>
+    <li><a href="#seats">Seats</a></li>
+    <li><a href="#history">My Tickets</a></li>
+    <li><a href="#admin">Admin</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-outline" onclick="openModal()">Login</button>
+    <button class="btn-fill" onclick="openModal()">Sign Up</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-film-strip">
+    <div class="film-frame-grid">
+      <div class="film-col">
+        <div class="film-frame"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1578022761797-b8636ac1773c?w=400&q=80')"></div>
+      </div>
+      <div class="film-col">
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&q=80')"></div>
+      </div>
+      <div class="film-col">
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&q=80')"></div>
+        <div class="film-frame" style="background-image:url('https://images.unsplash.com/photo-1578022761797-b8636ac1773c?w=400&q=80')"></div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-vignette"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Now Showing</div>
+    <h1>YOUR<br><span class="accent">SEAT</span><br><span class="red">AWAITS</span></h1>
+    <div class="hero-sub">Cinema, reimagined.</div>
+    <p class="hero-desc">Book tickets for the latest blockbusters in seconds. Choose your perfect seat, pick your showtime, and experience movies the way they were meant to be seen.</p>
+    <div class="hero-cta">
+      <button class="btn-hero" onclick="document.getElementById('movies').scrollIntoView({behavior:'smooth'})">BOOK NOW</button>
+      <button class="btn-ghost">
+        <span class="play-icon">▶</span>
+        Watch Trailers
+      </button>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">50+</div>
+      <div class="stat-label">Movies</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">12</div>
+      <div class="stat-label">Theaters</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">4K</div>
+      <div class="stat-label">Screens</div>
+    </div>
+  </div>
+</section>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">NOW BOOKING</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">DUNE PART THREE</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">AVENGERS: FINAL RECKONING</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">THE LAST SHADOW</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">INCEPTION II</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">GALAXY UNKNOWN</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">MIDNIGHT REQUIEM</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">NOW BOOKING</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">DUNE PART THREE</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">AVENGERS: FINAL RECKONING</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">THE LAST SHADOW</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">INCEPTION II</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">GALAXY UNKNOWN</span><span class="ticker-sep">✦</span>
+    <span class="ticker-item">MIDNIGHT REQUIEM</span><span class="ticker-sep">✦</span>
+  </div>
+</div>
+
+<!-- Features -->
+<section class="features">
+  <div class="section-label">Why Cineplex</div>
+  <div class="section-title">EVERY FEATURE<br>YOU NEED</div>
+  <div class="features-grid">
+    <div class="feature-card fade-up">
+      <span class="feature-icon">🎬</span>
+      <span class="feature-num">01</span>
+      <h3>Movie Listings</h3>
+      <p>Browse hundreds of titles across genres. From blockbusters to indie gems — all in one place with rich details and trailers.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <span class="feature-icon">💺</span>
+      <span class="feature-num">02</span>
+      <h3>Seat Selection</h3>
+      <p>Interactive auditorium maps. Pick your exact seat, choose premium sections, and see availability in real time.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <span class="feature-icon">🕐</span>
+      <span class="feature-num">03</span>
+      <h3>Showtimes</h3>
+      <p>Full schedule across all screens and formats — 2D, 3D, IMAX, 4DX. Filter by date, time, and theater location.</p>
+    </div>
+    <div class="feature-card fade-up">
+      <span class="feature-icon">🔒</span>
+      <span class="feature-num">04</span>
+      <h3>Secure Payment</h3>
+      <p>Multiple payment options including cards, UPI, and wallets. Bank-grade security with instant booking confirmation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Movies -->
+<section class="movies-section" id="movies">
+  <div class="movies-header">
+    <div>
+      <div class="section-label">Now Showing</div>
+      <div class="section-title">FEATURED<br>FILMS</div>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active">All</button>
+      <button class="filter-tab">Action</button>
+      <button class="filter-tab">Drama</button>
+      <button class="filter-tab">Sci-Fi</button>
+    </div>
+  </div>
+  <div class="movies-grid">
+    <div class="movie-card fade-up">
+      <div class="movie-poster" style="background-image:url('https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=600&q=80')">
+        <span class="movie-badge">New</span>
+        <span class="movie-rating">★ 9.1</span>
+        <div class="movie-overlay">
+          <button class="btn-book">Book Now</button>
+          <button class="btn-trailer">▶ Trailer</button>
+        </div>
+      </div>
+      <div class="movie-info">
+        <div class="movie-title">DUNE PART THREE</div>
+        <div class="movie-meta">
+          <span class="movie-genre">Sci-Fi • 2h 44m</span>
+          <span class="movie-price">₹299</span>
+        </div>
+      </div>
+    </div>
+    <div class="movie-card fade-up">
+      <div class="movie-poster" style="background-image:url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&q=80')">
+        <span class="movie-badge" style="background:var(--gold);color:var(--black)">Hot</span>
+        <span class="movie-rating">★ 8.7</span>
+        <div class="movie-overlay">
+          <button class="btn-book">Book Now</button>
+          <button class="btn-trailer">▶ Trailer</button>
+        </div>
+      </div>
+      <div class="movie-info">
+        <div class="movie-title">THE LAST SHADOW</div>
+        <div class="movie-meta">
+          <span class="movie-genre">Thriller • 2h 12m</span>
+          <span class="movie-price">₹249</span>
+        </div>
+      </div>
+    </div>
+    <div class="movie-card fade-up">
+      <div class="movie-poster" style="background-image:url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=600&q=80')">
+        <span class="movie-badge">IMAX</span>
+        <span class="movie-rating">★ 8.9</span>
+        <div class="movie-overlay">
+          <button class="btn-book">Book Now</button>
+          <button class="btn-trailer">▶ Trailer</button>
+        </div>
+      </div>
+      <div class="movie-info">
+        <div class="movie-title">GALAXY UNKNOWN</div>
+        <div class="movie-meta">
+          <span class="movie-genre">Action • 2h 32m</span>
+          <span class="movie-price">₹399</span>
+        </div>
+      </div>
+    </div>
+    <div class="movie-card fade-up">
+      <div class="movie-poster" style="background-image:url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?w=600&q=80')">
+        <span class="movie-badge" style="background:#6b5ce7">4DX</span>
+        <span class="movie-rating">★ 8.4</span>
+        <div class="movie-overlay">
+          <button class="btn-book">Book Now</button>
+          <button class="btn-trailer">▶ Trailer</button>
+        </div>
+      </div>
+      <div class="movie-info">
+        <div class="movie-title">MIDNIGHT REQUIEM</div>
+        <div class="movie-meta">
+          <span class="movie-genre">Horror • 1h 58m</span>
+          <span class="movie-price">₹349</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Seat Selection -->
+<section class="seats-section" id="seats">
+  <div class="seats-content">
+    <div class="section-label">Step 2</div>
+    <div class="section-title">PICK YOUR<br>PERFECT<br>SEAT</div>
+    <p class="section-sub">Our interactive seat map shows real-time availability. Choose from standard, premium, and recliner options.</p>
+    <ul class="feature-list">
+      <li><span class="check">✓</span> Live seat availability updated every 30 seconds</li>
+      <li><span class="check">✓</span> Premium recliner and couples seating options</li>
+      <li><span class="check">✓</span> Accessible seating prominently marked</li>
+      <li><span class="check">✓</span> Hold seats for 10 minutes during checkout</li>
+    </ul>
+  </div>
+  <div class="seat-demo">
+    <div class="screen-label">SCREEN</div>
+    <div class="screen"></div>
+    <div class="seat-grid" id="seatGrid"></div>
+    <div class="seat-legend">
+      <div class="legend-item"><div class="legend-dot available"></div>Available</div>
+      <div class="legend-item"><div class="legend-dot selected"></div>Selected</div>
+      <div class="legend-item"><div class="legend-dot taken"></div>Taken</div>
+      <div class="legend-item"><div class="legend-dot premium"></div>Premium</div>
+    </div>
+  </div>
+</section>
+
+<!-- Showtimes -->
+<section class="showtimes-section" id="showtimes">
+  <div class="section-label">Schedule</div>
+  <div class="section-title">TODAY'S<br>SHOWTIMES</div>
+  <p class="section-sub">Pick the show that fits your schedule. All times in your local timezone.</p>
+  <div class="showtimes-grid">
+    <div class="showtime-card">
+      <div class="show-date">Today • March 08</div>
+      <div class="show-movie">DUNE PART THREE</div>
+      <div class="show-theater">Cineplex IMAX • Screen 1</div>
+      <div class="times-row">
+        <div class="time-chip active">10:00 AM</div>
+        <div class="time-chip">1:30 PM</div>
+        <div class="time-chip">5:00 PM</div>
+        <div class="time-chip">8:30 PM</div>
+      </div>
+      <div class="show-footer">
+        <div class="availability">
+          <div>Availability</div>
+          <div class="avail-bar">
+            <div class="avail-seg filled"></div><div class="avail-seg filled"></div>
+            <div class="avail-seg filled"></div><div class="avail-seg filled"></div>
+            <div class="avail-seg filled"></div><div class="avail-seg red"></div>
+            <div class="avail-seg red"></div><div class="avail-seg"></div>
+          </div>
+        </div>
+        <button class="btn-book" style="width:auto;padding:10px 20px">Select</button>
+      </div>
+    </div>
+    <div class="showtime-card">
+      <div class="show-date">Today • March 08</div>
+      <div class="show-movie">GALAXY UNKNOWN</div>
+      <div class="show-theater">Cineplex Premium • Screen 3</div>
+      <div class="times-row">
+        <div class="time-chip">11:15 AM</div>
+        <div class="time-chip active">3:00 PM</div>
+        <div class="time-chip">6:45 PM</div>
+        <div class="time-chip">10:00 PM</div>
+      </div>
+      <div class="show-footer">
+        <div class="availability">
+          <div>Availability</div>
+          <div class="avail-bar">
+            <div class="avail-seg filled"></div><div class="avail-seg filled"></div>
+            <div class="avail-seg filled"></div><div class="avail-seg"></div>
+            <div class="avail-seg"></div><div class="avail-seg"></div>
+            <div class="avail-seg"></div><div class="avail-seg"></div>
+          </div>
+        </div>
+        <button class="btn-book" style="width:auto;padding:10px 20px">Select</button>
+      </div>
+    </div>
+    <div class="showtime-card">
+      <div class="show-date">Today • March 08</div>
+      <div class="show-movie">MIDNIGHT REQUIEM</div>
+      <div class="show-theater">Cineplex 4DX • Screen 5</div>
+      <div class="times-row">
+        <div class="time-chip">12:30 PM</div>
+        <div class="time-chip">4:15 PM</div>
+        <div class="time-chip active">7:30 PM</div>
+        <div class="time-chip">11:00 PM</div>
+      </div>
+      <div class="show-footer">
+        <div class="availability">
+          <div>Availability</div>
+          <div class="avail-bar">
+            <div class="avail-seg filled"></div><div class="avail-seg filled"></div>
+            <div class="avail-seg filled"></div><div class="avail-seg filled"></div>
+            <div class="avail-seg filled"></div><div class="avail-seg filled"></div>
+            <div class="avail-seg red"></div><div class="avail-seg red"></div>
+          </div>
+        </div>
+        <button class="btn-book" style="width:auto;padding:10px 20px">Select</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Payment -->
+<section class="payment-section" id="payment">
+  <div>
+    <div class="section-label">Step 3</div>
+    <div class="section-title">CHECKOUT &<br>PAYMENT</div>
+    <p class="section-sub">Fast, secure checkout. Your tickets arrive instantly via email and the app.</p>
+    <div style="margin-top:40px;">
+      <div style="font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Supported Methods</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="border:1px solid var(--border);padding:8px 16px;font-size:0.75rem;color:var(--muted);">💳 Visa</div>
+        <div style="border:1px solid var(--border);padding:8px 16px;font-size:0.75rem;color:var(--muted);">💳 Mastercard</div>
+        <div style="border:1px solid var(--border);padding:8px 16px;font-size:0.75rem;color:var(--muted);">📱 UPI</div>
+        <div style="border:1px solid var(--border);padding:8px 16px;font-size:0.75rem;color:var(--muted);">🏦 Net Banking</div>
+        <div style="border:1px solid var(--border);padding:8px 16px;font-size:0.75rem;color:var(--muted);">👜 Paytm</div>
+      </div>
+    </div>
+  </div>
+  <div class="payment-card">
+    <div class="payment-title">ORDER SUMMARY</div>
+    <div class="order-line"><span>Dune Part Three × 2</span><span>₹598</span></div>
+    <div class="order-line"><span>Seats: E4, E5 (Standard)</span><span>—</span></div>
+    <div class="order-line"><span>Screen: IMAX • 5:00 PM</span><span>—</span></div>
+    <div class="order-line"><span>Booking fee</span><span>₹30</span></div>
+    <div class="order-line"><span>GST (18%)</span><span>₹113</span></div>
+    <div class="order-line total"><span>Total</span><span>₹741</span></div>
+    <div style="font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:24px;">Payment Method</div>
+    <div class="pay-methods">
+      <div class="pay-method active"><span class="pay-method-icon">💳</span>Card</div>
+      <div class="pay-method"><span class="pay-method-icon">📱</span>UPI</div>
+      <div class="pay-method"><span class="pay-method-icon">🏦</span>Bank</div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Card Number</label>
+      <div class="fake-input">4242  4242  4242  4242</div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">Expiry</label>
+        <div class="fake-input">12 / 27</div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">CVV</label>
+        <div class="fake-input">• • •</div>
+      </div>
+    </div>
+    <button class="btn-pay">CONFIRM & PAY ₹741</button>
+  </div>
+</section>
+
+<!-- Booking History -->
+<section class="history-section" id="history">
+  <div class="section-label">My Account</div>
+  <div class="section-title">BOOKING<br>HISTORY</div>
+  <p class="section-sub">All your past and upcoming bookings in one place. Download e-tickets anytime.</p>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>Booking ID</th>
+        <th>Movie</th>
+        <th>Date & Time</th>
+        <th>Seats</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="booking-id">#CPX-2841</span></td>
+        <td>Dune Part Three</td>
+        <td>Mar 08, 2026 • 5:00 PM</td>
+        <td>E4, E5</td>
+        <td>₹741</td>
+        <td><span class="status-badge status-confirmed">Confirmed</span></td>
+        <td><button class="btn-outline" style="font-size:0.65rem;padding:6px 14px">E-Ticket</button></td>
+      </tr>
+      <tr>
+        <td><span class="booking-id">#CPX-2790</span></td>
+        <td>Galaxy Unknown</td>
+        <td>Feb 22, 2026 • 3:00 PM</td>
+        <td>B7, B8, B9</td>
+        <td>₹1,197</td>
+        <td><span class="status-badge status-used">Used</span></td>
+        <td><button class="btn-outline" style="font-size:0.65rem;padding:6px 14px">Receipt</button></td>
+      </tr>
+      <tr>
+        <td><span class="booking-id">#CPX-2611</span></td>
+        <td>The Last Shadow</td>
+        <td>Feb 10, 2026 • 7:30 PM</td>
+        <td>G2</td>
+        <td>₹249</td>
+        <td><span class="status-badge status-cancelled">Cancelled</span></td>
+        <td><button class="btn-outline" style="font-size:0.65rem;padding:6px 14px">Refund</button></td>
+      </tr>
+      <tr>
+        <td><span class="booking-id">#CPX-2580</span></td>
+        <td>Midnight Requiem</td>
+        <td>Jan 31, 2026 • 10:00 PM</td>
+        <td>D5, D6</td>
+        <td>₹698</td>
+        <td><span class="status-badge status-used">Used</span></td>
+        <td><button class="btn-outline" style="font-size:0.65rem;padding:6px 14px">Receipt</button></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Admin Module -->
+<section class="admin-section" id="admin">
+  <div class="section-label">Admin Module</div>
+  <div class="section-title">CONTROL<br>CENTER</div>
+  <p class="section-sub">Comprehensive dashboard for managing movies, schedules, and revenue analytics.</p>
+  <div class="admin-grid">
+    <div class="admin-sidebar">
+      <div class="admin-logo">⬛ ADMIN</div>
+      <div class="admin-nav-item active">📊 Dashboard</div>
+      <div class="admin-nav-item">🎬 Manage Movies</div>
+      <div class="admin-nav-item">🕐 Showtimes</div>
+      <div class="admin-nav-item">🎟️ Bookings</div>
+      <div class="admin-nav-item">👥 Users</div>
+      <div class="admin-nav-item">💰 Revenue</div>
+      <div class="admin-nav-item">🎭 Screens</div>
+      <div class="admin-nav-item">⚙️ Settings</div>
+    </div>
+    <div class="admin-main">
+      <div class="admin-stats">
+        <div class="admin-stat">
+          <div class="admin-stat-label">Today's Revenue</div>
+          <div class="admin-stat-value">₹2.4L</div>
+          <div class="admin-stat-change">↑ 12.5% vs yesterday</div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-label">Tickets Sold</div>
+          <div class="admin-stat-value">847</div>
+          <div class="admin-stat-change">↑ 8.3% vs yesterday</div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-label">Occupancy Rate</div>
+          <div class="admin-stat-value">73%</div>
+          <div class="admin-stat-change">↑ 5.1% vs last week</div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-label">Active Users</div>
+          <div class="admin-stat-value">1.2K</div>
+          <div class="admin-stat-change">↑ 21% this month</div>
+        </div>
+      </div>
+      <div class="admin-chart">
+        <div class="chart-title">Weekly Revenue (₹ in thousands)</div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="admin-chart">
+          <div class="chart-title">Top Movies This Week</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.85rem;">Dune Part Three</span>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:100px;height:4px;background:var(--border);position:relative;">
+                  <div style="position:absolute;left:0;top:0;height:100%;width:82%;background:var(--gold);"></div>
+                </div>
+                <span style="font-size:0.75rem;color:var(--muted);">82%</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.85rem;">Galaxy Unknown</span>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:100px;height:4px;background:var(--border);position:relative;">
+                  <div style="position:absolute;left:0;top:0;height:100%;width:68%;background:var(--gold);"></div>
+                </div>
+                <span style="font-size:0.75rem;color:var(--muted);">68%</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:0.85rem;">Midnight Requiem</span>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:100px;height:4px;background:var(--border);position:relative;">
+                  <div style="position:absolute;left:0;top:0;height:100%;width:54%;background:var(--red);"></div>
+                </div>
+                <span style="font-size:0.75rem;color:var(--muted);">54%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="admin-chart">
+          <div class="chart-title">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+            <button class="btn-fill" style="text-align:left;padding:10px 16px;font-size:0.75rem;letter-spacing:2px;">+ ADD MOVIE</button>
+            <button class="btn-outline" style="text-align:left;padding:10px 16px;font-size:0.75rem;letter-spacing:2px;">📅 ADD SHOWTIME</button>
+            <button class="btn-outline" style="text-align:left;padding:10px 16px;font-size:0.75rem;letter-spacing:2px;">📋 EXPORT REPORT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="logo">CINE<span>PLEX</span></a>
+      <p class="footer-desc">India's most immersive movie booking experience. Find showtimes, book seats, and make every film night unforgettable.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Movies</h4>
+      <ul>
+        <li><a href="#">Now Showing</a></li>
+        <li><a href="#">Coming Soon</a></li>
+        <li><a href="#">Top Rated</a></li>
+        <li><a href="#">IMAX Films</a></li>
+        <li><a href="#">4DX Films</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <ul>
+        <li><a href="#">My Profile</a></li>
+        <li><a href="#">Booking History</a></li>
+        <li><a href="#">Wishlist</a></li>
+        <li><a href="#">Loyalty Points</a></li>
+        <li><a href="#">Gift Cards</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Theatres</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 <a href="#">Cineplex</a>. All rights reserved.</span>
+    <span>Made with ✦ for cinema lovers</span>
+  </div>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    setTimeout(() => {
+      ring.style.left = e.clientX + 'px';
+      ring.style.top = e.clientY + 'px';
+    }, 60);
+  });
+
+  // Navbar scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Modal
+  function openModal() { document.getElementById('authModal').classList.add('active'); }
+  function closeModal() { document.getElementById('authModal').classList.remove('active'); }
+  document.getElementById('authModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('authModal')) closeModal();
+  });
+  function switchTab(btn, tab) {
+    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+  }
+
+  // Filter tabs
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Time chips
+  document.querySelectorAll('.time-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+      const row = this.closest('.times-row');
+      row.querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Pay methods
+  document.querySelectorAll('.pay-method').forEach(m => {
+    m.addEventListener('click', function() {
+      document.querySelectorAll('.pay-method').forEach(x => x.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Seat grid
+  const rows = ['A','B','C','D','E','F','G','H'];
+  const seatsPerRow = 12;
+  const taken = new Set(['A3','A4','B7','B8','C2','C9','C10','D5','E1','F6','F7','F8','G3','H11']);
+  const premium = new Set(['A1','A2','A11','A12','B1','B2','B11','B12']);
+  const selected = new Set(['E4','E5']);
+  const grid = document.getElementById('seatGrid');
+  rows.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'seat-row';
+    const label = document.createElement('div');
+    label.className = 'seat-row-label';
+    label.textContent = row;
+    rowEl.appendChild(label);
+    for (let i = 1; i <= seatsPerRow; i++) {
+      if (i === 4 || i === 10) {
+        const gap = document.createElement('div');
+        gap.className = 'seat-gap';
+        rowEl.appendChild(gap);
+      }
+      const id = row + i;
+      const seat = document.createElement('div');
+      seat.className = 'seat';
+      if (taken.has(id)) seat.classList.add('taken');
+      if (premium.has(id)) seat.classList.add('premium');
+      if (selected.has(id)) seat.classList.add('selected');
+      if (!taken.has(id)) {
+        seat.addEventListener('click', () => {
+          if (seat.classList.contains('selected')) {
+            seat.classList.remove('selected');
+          } else {
+            seat.classList.add('selected');
+          }
+        });
+      }
+      rowEl.appendChild(seat);
+    }
+    grid.appendChild(rowEl);
+  });
+
+  // Bar chart
+  const chartData = [
+    {label:'Mon', val:72}, {label:'Tue', val:58}, {label:'Wed', val:85},
+    {label:'Thu', val:64}, {label:'Fri', val:94}, {label:'Sat', val:100},
+    {label:'Sun', val:88}
+  ];
+  const barChart = document.getElementById('barChart');
+  chartData.forEach(d => {
+    const group = document.createElement('div');
+    group.className = 'bar-group';
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = '0px';
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-label';
+    lbl.textContent = d.label;
+    group.appendChild(bar);
+    group.appendChild(lbl);
+    barChart.appendChild(group);
+    setTimeout(() => { bar.style.height = (d.val) + 'px'; }, 200);
+  });
+
+  // Scroll fade
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
